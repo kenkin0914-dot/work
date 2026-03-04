@@ -1,1 +1,54 @@
-001
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>裝修報價單</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧰 裝修報價單</h1>
+        
+        <!-- 工具列 -->
+        <div class="toolbar">
+            <button id="addRowBtn">➕ 新增項目</button>
+            <button id="saveBtn">💾 儲存到本機</button>
+            <button id="exportBtn">📥 匯出 CSV</button>
+            <button id="importBtn">📤 匯入 CSV</button>
+            <input type="file" id="importFile" accept=".csv" style="display: none;">
+        </div>
+
+        <!-- 報價表格 -->
+        <table id="quotationTable">
+            <thead>
+                <tr>
+                    <th>項目名稱</th>
+                    <th>描述</th>
+                    <th>單位</th>
+                    <th>數量</th>
+                    <th>單價</th>
+                    <th>總價</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- JavaScript 會動態產生列 -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="5" style="text-align: right;"><strong>總計：</strong></td>
+                    <td id="grandTotal">0</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="footer">
+            <small>資料會自動儲存在此瀏覽器中，或可匯出 CSV 備份。</small>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
