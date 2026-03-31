@@ -2,53 +2,974 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>裝修報價單</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>柏景臺 裝修報價表 (可編輯項目＋儲存列印＋下載HTML)</title>
+    <style>
+        /* ---------- 全域重置 ---------- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #e6ecf0;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 16px;
+            line-height: 1.5;
+            color: #1e2b37;
+        }
+
+        /* 主要報價單容器 */
+        .quote-container {
+            max-width: 1280px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px -12px rgba(0, 20, 30, 0.25);
+            overflow: hidden;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        /* ---------- 頁首 ---------- */
+        .quote-header {
+            background: linear-gradient(145deg, #0b2a3e, #123b4e);
+            color: white;
+            padding: 24px 24px 18px 24px;
+        }
+
+        .header-top {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .company {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .company-name {
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+
+        .company-tagline {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 4px;
+            font-weight: 300;
+        }
+
+        .doc-info {
+            text-align: right;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 18px;
+            border-radius: 60px;
+            backdrop-filter: blur(2px);
+        }
+
+        .doc-info p {
+            margin: 2px 0;
+            font-size: 0.9rem;
+        }
+
+        .doc-info .doc-number {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .project-title {
+            border-left: 5px solid #ffb347;
+            padding-left: 18px;
+            margin-top: 8px;
+        }
+
+        .project-title h2 {
+            font-size: 2rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .project-address {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .project-address span {
+            background: #2a5368;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            background-color: #d4e3ed;
+            color: #113546;
+            padding: 3px 10px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* ---------- 編輯面板 ---------- */
+        .edit-panel {
+            background-color: #f0f7fc;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 16px 16px 8px 16px;
+            border: 1px solid #b8cfde;
+        }
+        .edit-panel h3 {
+            color: #0b2a3e;
+            margin-bottom: 12px;
+            font-size: 1.3rem;
+        }
+        .edit-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 1 1 140px;
+            min-width: 120px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #2e4b5f;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 30px;
+            border: 1px solid #a0bbcc;
+            font-size: 0.9rem;
+            background: white;
+        }
+        .form-group input:focus {
+            outline: 2px solid #2a5f7a;
+        }
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .btn-sm {
+            background-color: #1b3b4f;
+            border: none;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #2f5569;
+        }
+        .btn-sm:hover {
+            background-color: #123b4e;
+        }
+        .btn-sm.add {
+            background-color: #2e7d5e;
+        }
+        .btn-sm.update {
+            background-color: #2a5f7a;
+        }
+        .btn-sm.cancel {
+            background-color: #6d8f9f;
+        }
+        .btn-sm.delete-confirm {
+            background-color: #b34a4a;
+        }
+
+        /* ---------- 表格區 (橫向捲動) ---------- */
+        .table-wrapper {
+            padding: 0 16px 20px 16px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .quote-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            min-width: 800px;  /* 增加寬度以容納操作按鈕 */
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .quote-table th {
+            background-color: #1b3b4f;
+            color: white;
+            font-weight: 600;
+            padding: 14px 8px;
+            white-space: nowrap;
+            text-align: center;
+            border-right: 1px solid #2f5569;
+        }
+
+        .quote-table th:last-child {
+            border-right: none;
+        }
+
+        .quote-table td {
+            background-color: #ffffff;
+            padding: 14px 8px;
+            border-bottom: 1px solid #d9e2e9;
+            vertical-align: middle;
+        }
+
+        .quote-table tbody tr:hover td {
+            background-color: #f6fafd;
+        }
+
+        .text-left { text-align: left; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+
+        .number-format {
+            font-family: 'Courier New', 'Segoe UI', monospace;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+
+        .remark {
+            color: #4d6a7e;
+            font-size: 0.9rem;
+            font-style: italic;
+            max-width: 160px;
+        }
+
+        /* 操作按鈕 */
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 0 4px;
+            padding: 4px 6px;
+            border-radius: 20px;
+            transition: 0.1s;
+        }
+        .action-btn.edit {
+            color: #2a5f7a;
+        }
+        .action-btn.delete {
+            color: #b34a4a;
+        }
+        .action-btn:hover {
+            background-color: #e0ecf5;
+        }
+
+        tfoot tr {
+            background-color: #eef3f7;
+            font-weight: 600;
+        }
+
+        tfoot td {
+            padding: 16px 8px;
+            border-top: 2px solid #b0c8d9;
+            border-bottom: none;
+        }
+
+        .total-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0a2a3b;
+        }
+
+        .grand-total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1d6f9c;
+        }
+
+        /* ---------- 頁尾 ---------- */
+        .quote-footer {
+            background-color: #f1f6f9;
+            padding: 18px 20px 24px 20px;
+            border-top: 1px solid #cbdae3;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+        }
+
+        .footer-note {
+            color: #2e4b5f;
+        }
+
+        .footer-note p {
+            margin: 4px 0;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .footer-note i {
+            color: #3b6e8f;
+            width: 20px;
+        }
+
+        .footer-stamp {
+            text-align: right;
+        }
+
+        .footer-stamp .signature {
+            border-bottom: 2px dashed #7f9fb5;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #1e3f52;
+        }
+
+        .footer-stamp .date {
+            color: #446f89;
+            font-size: 0.95rem;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #bfd5e2;
+            margin: 12px 0;
+        }
+
+        .summary-strip {
+            padding: 8px 20px 16px 20px;
+            background-color: #fafdff;
+            border-top: 1px dashed #b8cfde;
+            font-size: 0.9rem;
+            color: #2d4e63;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        /* ---------- 手機微調 ---------- */
+        @media screen and (max-width: 600px) {
+            .quote-header { padding: 20px 16px 16px 16px; }
+            .company-name { font-size: 1.7rem; }
+            .project-title h2 { font-size: 1.7rem; }
+            .table-wrapper { padding: 10px 8px 16px 8px; }
+            .quote-table th,
+            .quote-table td { padding: 12px 5px; font-size: 0.85rem; }
+            .remark { max-width: 120px; font-size: 0.8rem; }
+            .grand-total { font-size: 1.1rem; }
+            .edit-form { flex-direction: column; align-items: stretch; }
+            .form-group { width: 100%; }
+        }
+
+        @media screen and (max-width: 400px) {
+            .company-name { font-size: 1.5rem; }
+            .remark { display: none; }
+        }
+
+        /* ---------- 列印 / PDF 樣式 ---------- */
+        @media print {
+            body { background-color: white; margin: 0.5cm; display: block; }
+            .quote-container { max-width: 100%; box-shadow: none; border-radius: 0; }
+            .quote-header { background: #0b2a3e; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .quote-table th { background-color: #ccc; color: black; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .quote-table td { background-color: white; }
+            .quote-footer { background-color: white; border-top: 1px solid black; }
+            .summary-strip { background-color: white; border-top: 1px dashed black; }
+            .no-print { display: none; }   /* 列印時隱藏按鈕列、編輯區和編輯面板 */
+        }
+
+        /* 按鈕工具列 */
+        .toolbar {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 0 12px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .btn {
+            background-color: #1b3b4f;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: 0.2s;
+            border: 1px solid #2f5569;
+        }
+        .btn:hover {
+            background-color: #123b4e;
+            transform: scale(1.02);
+        }
+        .btn.print {
+            background-color: #2a5f7a;
+        }
+        .btn.save {
+            background-color: #2e7d5e;
+        }
+        .btn.load {
+            background-color: #9b6b43;
+        }
+        .btn.html {
+            background-color: #a5512e;
+        }
+
+        /* JSON 編輯區 */
+        .editor-panel {
+            max-width: 1280px;
+            width: 100%;
+            background: #f0f7fc;
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 10px;
+            border: 1px solid #b8cfde;
+        }
+        .editor-panel summary {
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: #0b2a3e;
+            margin-bottom: 8px;
+        }
+        .editor-panel textarea {
+            width: 100%;
+            height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid #a0bbcc;
+            resize: vertical;
+            background: #fefefe;
+        }
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-apply {
+            background-color: #2a5f7a;
+        }
+        .btn-cancel {
+            background-color: #6d8f9f;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🧰 裝修報價單</h1>
-        
-        <!-- 工具列 -->
-        <div class="toolbar">
-            <button id="addRowBtn">➕ 新增項目</button>
-            <button id="saveBtn">💾 儲存到本機</button>
-            <button id="exportBtn">📥 匯出 CSV</button>
-            <button id="importBtn">📤 匯入 CSV</button>
-            <input type="file" id="importFile" accept=".csv" style="display: none;">
+
+<!-- 工具列 (列印、儲存、載入、下載HTML) 不列印 -->
+<div class="toolbar no-print">
+    <button class="btn print" id="printBtn">🖨️ 列印 / 儲存 PDF</button>
+    <button class="btn save" id="saveBtn">💾 儲存報價到瀏覽器</button>
+    <button class="btn load" id="loadBtn">📂 載入上次儲存</button>
+    <button class="btn html" id="downloadHtmlBtn">📄 另存HTML檔</button>
+</div>
+
+<!-- 報價單容器 -->
+<div class="quote-container" id="quoteContainer">
+    <!-- 報價內容會由 JavaScript 動態產生 -->
+</div>
+
+<!-- JSON 編輯區 (不列印) -->
+<div class="editor-panel no-print">
+    <details>
+        <summary>✏️ 直接編輯資料 (進階，修改後點擊「套用變更」)</summary>
+        <textarea id="jsonEditor" placeholder="在此修改 quoteData JSON ..."></textarea>
+        <div class="editor-actions">
+            <button class="btn btn-apply" id="applyJsonBtn">套用變更</button>
+            <button class="btn btn-cancel" id="resetJsonBtn">復原為原始資料</button>
         </div>
+    </details>
+</div>
 
-        <!-- 報價表格 -->
-        <table id="quotationTable">
-            <thead>
-                <tr>
-                    <th>項目名稱</th>
-                    <th>描述</th>
-                    <th>單位</th>
-                    <th>數量</th>
-                    <th>單價</th>
-                    <th>總價</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- JavaScript 會動態產生列 -->
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="5" style="text-align: right;"><strong>總計：</strong></td>
-                    <td id="grandTotal">0</td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
+<!-- 操作提示 -->
+<div class="screen-credit no-print" style="margin-top: 12px; color:#5f7d91; font-size:0.8rem;">
+    💡 修改資料後點「套用變更」更新報價；「儲存」會存入瀏覽器，下次開啟自動載入；「另存HTML檔」可下載獨立報價單。
+</div>
 
-        <div class="footer">
-            <small>資料會自動儲存在此瀏覽器中，或可匯出 CSV 備份。</small>
-        </div>
-    </div>
+<script>
+    (function() {
+        // ----- 輔助函式：格式化日期 -----
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `${year}年${month}月${day}日`;
+        }
 
-    <script src="script.js"></script>
+        function formatNumber(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `Q-${year}${month}${day}`;
+        }
+
+        // ----- 產生基於當前日期的預設資料 -----
+        function getDefaultData() {
+            const now = new Date();
+            const expiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // +30天
+
+            return {
+                company: {
+                    name: '健·興 工程',
+                    tagline: '精工細作 · 誠信報價'
+                },
+                document: {
+                    number: formatNumber(now),
+                    date: formatDate(now),
+                    expiry: formatDate(expiry)
+                },
+                project: {
+                    title: '🧾 裝修工程報價單',
+                    address: '柏景臺 1座 36樓 F室',
+                    badge: '室內裝修 · 人工報價'
+                },
+                items: [
+                    { no: 1, description: '主廁牆身 + 地台人工', qty: 1, unit: '項', price: 15486, remark: '主浴室牆面及地面鋪貼人工' },
+                    { no: 2, description: '客廁牆身 + 地台人工', qty: 1, unit: '項', price: 15714, remark: '客用浴室牆面及地面鋪貼人工' },
+                    { no: 3, description: '浴缸結磚人工', qty: 2, unit: '個', price: 2250, remark: '浴缸周邊砌磚/貼磚 (兩個浴室)' },
+                    { no: 4, description: '企缸人工', qty: 1, unit: '個', price: 2000, remark: '淋浴間企缸安裝及防水層處理' },
+                    { no: 5, description: '防水人工', qty: 2, unit: '個', price: 2500, remark: '主廁、客廁防水施工' }
+                ],
+                footerNotes: [
+                    '本報價僅包含人工費用，材料另計。',
+                    '施工範圍以圖則及現場實測為準。',
+                    '付款方式：動工三成，中期三成，完工四成。',
+                    '報價有效期至 ' + formatDate(expiry)
+                ],
+                signature: {
+                    name: 'KEN WONG',
+                    date: formatDate(now),
+                    phone: '852-96015679'
+                }
+            };
+        }
+
+        // 當前使用的資料
+        let currentData = loadFromStorage();
+
+        // 編輯狀態：正在編輯的項目索引 (null 表示新增)
+        let editingIndex = null;
+
+        function loadFromStorage() {
+            try {
+                const saved = localStorage.getItem('quoteData');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+            } catch (e) {}
+            // 沒有儲存資料時，使用動態產生的預設資料
+            return getDefaultData();
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('quoteData', JSON.stringify(currentData));
+        }
+
+        // ----- 渲染報價 (包含編輯面板和操作按鈕) -----
+        function renderQuote(data) {
+            const container = document.getElementById('quoteContainer');
+            if (!container) return;
+
+            // 計算總金額
+            const total = data.items.reduce((acc, item) => acc + (item.qty * item.price), 0);
+
+            // 建立表格主體 HTML，加入操作按鈕列
+            let itemsHtml = '';
+            data.items.forEach((item, index) => {
+                const totalPrice = item.qty * item.price;
+                itemsHtml += `<tr>
+                    <td class="text-center">${item.no}</td>
+                    <td class="text-left">${item.description}</td>
+                    <td class="text-center">${item.qty}</td>
+                    <td class="text-center">${item.unit}</td>
+                    <td class="text-right number-format">${item.price.toLocaleString()}</td>
+                    <td class="text-right number-format">${totalPrice.toLocaleString()}</td>
+                    <td class="remark">${item.remark}</td>
+                    <td class="text-center" style="white-space: nowrap;">
+                        <button class="action-btn edit" data-index="${index}" title="編輯">✏️</button>
+                        <button class="action-btn delete" data-index="${index}" title="刪除">🗑️</button>
+                    </td>
+                </tr>`;
+            });
+
+            // 底部備註 HTML
+            let notesHtml = '';
+            data.footerNotes.forEach(note => {
+                notesHtml += `<p><i>📋</i> ${note}</p>`;
+            });
+
+            // 摘要區域
+            let summaryHtml = '';
+            data.items.forEach(item => {
+                const itemTotal = item.qty * item.price;
+                let shortDesc = item.description.replace('人工', '').trim();
+                if (shortDesc.includes('主廁')) shortDesc = '主廁';
+                else if (shortDesc.includes('客廁')) shortDesc = '客廁';
+                else if (shortDesc.includes('浴缸')) shortDesc = '浴缸磚';
+                else if (shortDesc.includes('企缸')) shortDesc = '企缸';
+                else if (shortDesc.includes('防水')) shortDesc = '防水';
+                else shortDesc = item.description.substring(0,4);
+                summaryHtml += `<div>${shortDesc} $${itemTotal.toLocaleString()}</div>`;
+            });
+            summaryHtml += `<div style="font-weight:600;">總額 $${total.toLocaleString()}</div>`;
+
+            // 完整 HTML 結構 (包含編輯面板)
+            const html = `
+                <div class="quote-header">
+                    <div class="header-top">
+                        <div class="company">
+                            <span class="company-name">${data.company.name}</span>
+                            <span class="company-tagline">${data.company.tagline}</span>
+                        </div>
+                        <div class="doc-info">
+                            <p class="doc-number">報價單編號：${data.document.number}</p>
+                            <p>日期：${data.document.date}</p>
+                            <p>有效期：${data.document.expiry}</p>
+                        </div>
+                    </div>
+                    <div class="project-title">
+                        <h2>${data.project.title}</h2>
+                        <div class="project-address">
+                            <span>📍 ${data.project.address}</span>
+                            <span class="badge">${data.project.badge}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 編輯面板 (不列印) -->
+                <div class="edit-panel no-print" id="editPanel">
+                    <h3>✏️ 編輯 / 新增項目</h3>
+                    <div class="edit-form">
+                        <div class="form-group">
+                            <label>工程項目</label>
+                            <input type="text" id="editDesc" placeholder="例如：主廁牆身人工">
+                        </div>
+                        <div class="form-group">
+                            <label>數量</label>
+                            <input type="number" id="editQty" value="1" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>單位</label>
+                            <input type="text" id="editUnit" placeholder="項/個">
+                        </div>
+                        <div class="form-group">
+                            <label>單價 (HKD)</label>
+                            <input type="number" id="editPrice" value="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>備註</label>
+                            <input type="text" id="editRemark" placeholder="簡短說明">
+                        </div>
+                    </div>
+                    <div class="edit-actions">
+                        <button class="btn-sm add" id="addNewBtn">➕ 新增項目</button>
+                        <button class="btn-sm update" id="updateItemBtn" style="display:none;">✅ 更新項目</button>
+                        <button class="btn-sm cancel" id="cancelEditBtn">取消</button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="quote-table">
+                        <thead>
+                            <tr>
+                                <th width="5%">項次</th>
+                                <th class="text-left">工程項目</th>
+                                <th width="8%" class="text-center">數量</th>
+                                <th width="8%" class="text-center">單位</th>
+                                <th width="12%" class="text-right">單價 (HKD)</th>
+                                <th width="12%" class="text-right">總價 (HKD)</th>
+                                <th width="15%" class="text-left">備註</th>
+                                <th width="8%" class="text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="6" class="text-right total-label">總計 (HKD) ：</td>
+                                <td class="text-right grand-total number-format" colspan="2">${total.toLocaleString()}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="quote-footer">
+                    <div class="footer-note">
+                        ${notesHtml}
+                        <hr>
+                        <p><i>🏷️</i> 報價有效期至 ${data.document.expiry}</p>
+                    </div>
+                    <div class="footer-stamp">
+                        <div class="signature">${data.signature.name}</div>
+                        <div class="date">${data.signature.date}  ｜ 公司印鑑</div>
+                        <div style="margin-top: 10px; color:#2d5c7a; font-size:0.9rem;">📞 ${data.signature.phone}</div>
+                    </div>
+                </div>
+
+                <div class="summary-strip">
+                    ${summaryHtml}
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // 綁定編輯和刪除按鈕事件
+            document.querySelectorAll('.action-btn.edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = e.currentTarget.dataset.index;
+                    startEdit(parseInt(index));
+                });
+            });
+            document.querySelectorAll('.action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = e.currentTarget.dataset.index;
+                    if (confirm('確定要刪除此項目嗎？')) {
+                        deleteItem(parseInt(index));
+                    }
+                });
+            });
+
+            // 綁定編輯面板按鈕
+            document.getElementById('addNewBtn').addEventListener('click', addNewItem);
+            document.getElementById('updateItemBtn').addEventListener('click', updateItem);
+            document.getElementById('cancelEditBtn').addEventListener('click', cancelEdit);
+        }
+
+        // ----- 編輯功能 -----
+        function startEdit(index) {
+            editingIndex = index;
+            const item = currentData.items[index];
+            document.getElementById('editDesc').value = item.description;
+            document.getElementById('editQty').value = item.qty;
+            document.getElementById('editUnit').value = item.unit;
+            document.getElementById('editPrice').value = item.price;
+            document.getElementById('editRemark').value = item.remark;
+
+            // 切換按鈕顯示
+            document.getElementById('addNewBtn').style.display = 'none';
+            document.getElementById('updateItemBtn').style.display = 'inline-block';
+        }
+
+        function cancelEdit() {
+            editingIndex = null;
+            // 清空表單
+            document.getElementById('editDesc').value = '';
+            document.getElementById('editQty').value = 1;
+            document.getElementById('editUnit').value = '';
+            document.getElementById('editPrice').value = 0;
+            document.getElementById('editRemark').value = '';
+
+            document.getElementById('addNewBtn').style.display = 'inline-block';
+            document.getElementById('updateItemBtn').style.display = 'none';
+        }
+
+        function addNewItem() {
+            const desc = document.getElementById('editDesc').value.trim();
+            const qty = parseInt(document.getElementById('editQty').value) || 1;
+            const unit = document.getElementById('editUnit').value.trim() || '項';
+            const price = parseFloat(document.getElementById('editPrice').value) || 0;
+            const remark = document.getElementById('editRemark').value.trim() || '';
+
+            if (!desc) {
+                alert('請填寫工程項目');
+                return;
+            }
+
+            // 自動生成新項次
+            const maxNo = currentData.items.length > 0 ? Math.max(...currentData.items.map(i => i.no)) : 0;
+            const newItem = {
+                no: maxNo + 1,
+                description: desc,
+                qty: qty,
+                unit: unit,
+                price: price,
+                remark: remark
+            };
+            currentData.items.push(newItem);
+            // 重新排序項次（可選）
+            currentData.items.sort((a, b) => a.no - b.no);
+            // 更新畫面
+            renderQuote(currentData);
+            updateEditor();
+            saveToStorage();
+            cancelEdit(); // 清空表單
+        }
+
+        function updateItem() {
+            if (editingIndex === null) return;
+            const desc = document.getElementById('editDesc').value.trim();
+            const qty = parseInt(document.getElementById('editQty').value) || 1;
+            const unit = document.getElementById('editUnit').value.trim() || '項';
+            const price = parseFloat(document.getElementById('editPrice').value) || 0;
+            const remark = document.getElementById('editRemark').value.trim() || '';
+
+            if (!desc) {
+                alert('請填寫工程項目');
+                return;
+            }
+
+            currentData.items[editingIndex] = {
+                ...currentData.items[editingIndex],
+                description: desc,
+                qty: qty,
+                unit: unit,
+                price: price,
+                remark: remark
+            };
+            renderQuote(currentData);
+            updateEditor();
+            saveToStorage();
+            cancelEdit();
+        }
+
+        function deleteItem(index) {
+            currentData.items.splice(index, 1);
+            // 重新編排序號
+            currentData.items.forEach((item, idx) => { item.no = idx + 1; });
+            renderQuote(currentData);
+            updateEditor();
+            saveToStorage();
+            cancelEdit(); // 如果正在編輯該項目，取消編輯
+        }
+
+        // ----- JSON 編輯器同步 -----
+        function updateEditor() {
+            const editor = document.getElementById('jsonEditor');
+            if (editor) {
+                editor.value = JSON.stringify(currentData, null, 2);
+            }
+        }
+
+        // 初始化渲染
+        renderQuote(currentData);
+        updateEditor();
+
+        // ----- 按鈕事件 -----
+        document.getElementById('printBtn').addEventListener('click', () => {
+            window.print();
+        });
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            saveToStorage();
+            alert('報價資料已儲存到瀏覽器！');
+        });
+
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            const loaded = loadFromStorage();
+            currentData = loaded;
+            renderQuote(currentData);
+            updateEditor();
+            alert('已載入上次儲存的報價。');
+        });
+
+        // 套用 JSON 編輯器的內容
+        document.getElementById('applyJsonBtn').addEventListener('click', () => {
+            const editor = document.getElementById('jsonEditor');
+            try {
+                const newData = JSON.parse(editor.value);
+                // 驗證必要欄位
+                if (!newData.company || !newData.items || !newData.signature) {
+                    throw new Error('資料結構不完整');
+                }
+                currentData = newData;
+                renderQuote(currentData);
+                saveToStorage();
+                alert('已套用變更並自動儲存。');
+            } catch (e) {
+                alert('JSON 格式錯誤：' + e.message);
+            }
+        });
+
+        // 重置為原始資料 (使用動態產生的當前日期)
+        document.getElementById('resetJsonBtn').addEventListener('click', () => {
+            currentData = getDefaultData();
+            renderQuote(currentData);
+            updateEditor();
+            saveToStorage();
+            alert('已恢復為原始報價資料（日期已更新為今天）。');
+        });
+
+        // 另存 HTML 檔 (包含地址資訊)
+        document.getElementById('downloadHtmlBtn').addEventListener('click', function() {
+            let styles = '';
+            const styleNodes = document.querySelectorAll('style');
+            styleNodes.forEach(style => {
+                styles += style.innerHTML + '\n';
+            });
+
+            // 取得目前報價單容器的 outerHTML (但要去掉編輯面板，因為編輯面板有 no-print 類，但我們希望下載的報價單不含編輯面板，因此複製一份並移除編輯面板)
+            const quoteContainer = document.getElementById('quoteContainer');
+            const cloneContainer = quoteContainer.cloneNode(true);
+            // 移除編輯面板 (它位於 .quote-header 之後的第一個元素，但更穩健的方式是移除所有 .edit-panel)
+            const editPanelClone = cloneContainer.querySelector('.edit-panel');
+            if (editPanelClone) editPanelClone.remove();
+
+            // 另外移除可能殘留的操作按鈕？操作按鈕在表格中，我們希望保留嗎？通常下載的報價單應該保留完整表格，但操作按鈕是功能性按鈕，可以保留（因為下載的HTML仍可編輯，但用戶可能想要乾淨的版本）。這裡我們保留操作按鈕，因為下載的是可編輯版本。如果需要純報價單，可另存PDF。
+            // 如果希望下載的HTML沒有操作按鈕，可以在這裡移除 .action-btn 所在列。但根據需求，用戶希望顯示報價地址，沒有要求移除操作按鈕。所以保留。
+
+            const quoteHTML = cloneContainer.outerHTML;
+
+            // 建構完整的獨立 HTML，標題加上地址
+            const fullHTML = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>健·興 工程 報價單 - ${currentData.project.address}</title>
+    <style>${styles}</style>
+</head>
+<body style="background-color:#e6ecf0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 16px;">
+    ${quoteHTML}
+</body>
+</html>`;
+
+            const blob = new Blob([fullHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `健興工程_${currentData.project.address.replace(/\s+/g, '_')}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+    })();
+</script>
+
+<!-- 額外說明 -->
+<div style="font-size:0.8rem; margin-top:16px; max-width:1280px; width:100%; color:#2d5c7a;">
+    ⚙️ 修改後可按「套用變更」；「儲存報價到瀏覽器」會保留目前資料；「另存HTML檔」可下載獨立報價單，檔案名稱包含地址。
+</div>
 </body>
 </html>
